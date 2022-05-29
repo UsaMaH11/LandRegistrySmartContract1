@@ -236,8 +236,8 @@ contract  LandRegistration is Conditions  {
       "Either Buyer or Land doesnot exist or approved");
 
       require(lands[_landId].LandPrice == msg.value, "You must pay full amount");
-      lands[_landId].currOwner = payable(msg.sender);
       lands[_landId].currOwner.transfer(msg.value);
+      lands[_landId].currOwner = payable(msg.sender);
       
     }
 
