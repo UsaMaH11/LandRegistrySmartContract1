@@ -3,57 +3,57 @@ pragma solidity >=0.7.0 <0.9.0;
 
 contract Data {
     // Data types Constrcut and Mappings
- enum Status {NotExist, Pending, Approved, Rejected}
+    enum Status { Pending, Approved, Rejected}
     struct landregistry {
-    Status status;
-    uint LandId; 
-    string Area; 
-    string  City; 
-    string State; 
-    uint LandPrice; 
-    uint PropertyPID; 
-    address payable currOwner;
-  }
-struct LandInspector {
+       Status status;
+       uint LandId; 
+       string Area; 
+       string  City; 
+       string State; 
+       uint LandPrice; 
+       uint PropertyPID; 
+       address payable currOwner;
+    }
+    struct LandInspector {
  
-    address Id; 
-    string Name; 
-    uint Age; 
-    string Designation; 
-}
+       address Id; 
+       string Name; 
+       uint Age; 
+       string Designation; 
+    }
 
-struct Seller  {
-    Status status;
-    string Name; 
-    uint Age; 
-    string City; 
-    string CNIC; 
-    string Email; 
-}
+    struct Seller  {
+       Status status;
+       string Name; 
+       uint Age; 
+       string City; 
+       string CNIC; 
+       string Email; 
+    }
 
-struct Buyer {
-    Status status;
-    string  Name; 
-    uint  Age; 
-    string  City; 
-    string  CNIC; 
-    string  Email;
-}
+    struct Buyer {
+       Status status;
+       string  Name; 
+       uint  Age; 
+       string  City; 
+       string  CNIC; 
+       string  Email;
+    }
 
-    mapping(uint => landregistry) public lands; 
-    mapping(address => LandInspector) public InspectorMapping; 
-    mapping(address => Seller) public SellerMapping; 
-    mapping(address => Buyer) public BuyerMapping; 
-    mapping(address => bool) public isBuyerExist;
-    mapping(address => bool) public isSellerExist;
-    mapping(uint => bool) public isLandExist;
+    mapping(uint => landregistry) internal lands; 
+    mapping(address => LandInspector) internal InspectorMapping; 
+    mapping(address => Seller) internal SellerMapping; 
+    mapping(address => Buyer) internal BuyerMapping; 
+    mapping(address => bool) internal isBuyerExist;
+    mapping(address => bool) internal isSellerExist;
+    mapping(uint => bool) internal isLandExist;
 }
 
 
 contract Conditions is Data {
-       address public _owner;
-// Conditional Checks, modifiers
-   constructor() {
+    address internal _owner;
+    // Conditional Checks, modifiers
+    constructor() {
         _owner = msg.sender;
     }
         modifier onlyowner() {
@@ -78,6 +78,7 @@ contract Conditions is Data {
     event LandAdded(uint landId, address owner);
     event BuyerAdded(string _name, uint _age, string city , string cnic , string email);
     event BuyerUpdated(string _name, uint _age, string city , string cnic , string email);
+    event landsNewOwner(uint landId, address newOwner);
 
 }
 
@@ -89,9 +90,7 @@ contract Conditions is Data {
 contract  LandRegistration is Conditions  {
 
 
-
-
-//add new Seller /update it if the address of seller already exists
+    //add new Seller /update it if the address of seller already exists
     function registerSeller(
         string memory _name, 
         uint _Age,
@@ -101,7 +100,7 @@ contract  LandRegistration is Conditions  {
     )
     public  
     {
-   require( !isBuyerExist[msg.sender],
+       require( !isBuyerExist[msg.sender],
        "You already have Buyer Account with this address, try another address");
        if(!isSellerExist[msg.sender]){
         SellerMapping[msg.sender] = Seller(Status.Pending,_name,_Age,_city,_CNIC,_email); 
@@ -114,15 +113,14 @@ contract  LandRegistration is Conditions  {
         SellerMapping[msg.sender].CNIC = _CNIC;
         SellerMapping[msg.sender].Email = _email;
         emit sellerUpdated(_name,_Age,_city,_CNIC,_email);
-     }
-      
+         }
+    }
 
-}
-    function approveSellers(address _sellerAddress) public isLandInspector(msg.sender) 
+    //approve seller if it exists in SellerMapping
+    function approveSellers(address _sellerAddress) external isLandInspector(msg.sender) 
         returns (bool)
     {
         require( isSellerExist[_sellerAddress],"this Seller does not exist");
-        // require(userRoles[_newUser] != Role.Visitor);
         SellerMapping[_sellerAddress].status = Status.Approved;
         return true;
     }
@@ -157,8 +155,8 @@ contract  LandRegistration is Conditions  {
     }
 
 
-//To reject a land add by a seller 
-//@params ladndID
+    //To reject a land add by a seller 
+    //@params ladndID
 
     function RejectLand(uint _landId) public isLandInspector(msg.sender)
     checkIfLandExist(_landId)
@@ -168,7 +166,7 @@ contract  LandRegistration is Conditions  {
         return true;
     }
 
-//Check status of seller if approved/rejected or pending
+    //Check status of seller if approved/rejected or pending
 
     function checkSellerStatus(address _address) public view returns(string memory) {
           require(isSellerExist[_address], "this seller doesnt exist");
@@ -206,8 +204,8 @@ contract  LandRegistration is Conditions  {
       );
     }
 
-//Register New buyer / update the existing buyer
-//Check Against address if already exist update the Buyer info
+    //Register New buyer / update the existing buyer
+    //Check Against address if already exist update the Buyer info
     
     function registerBuyer(
         string memory _name, 
@@ -231,34 +229,33 @@ contract  LandRegistration is Conditions  {
             BuyerMapping[msg.sender].Email = _email;
             emit BuyerUpdated(_name,_Age,_city,_CNIC,_email);
            }
-        }
+    }
 
 
-//approve Buyer so he can buy land
-//Only landInspector can approve
+    //approve Buyer so he can buy land
+    //Only landInspector can approve
     function approveBuyer(address _Buyeraddress) public isLandInspector(msg.sender)
         returns (bool)
         {
         require(isBuyerExist[_Buyeraddress],"this buyer doent exist");
         BuyerMapping[_Buyeraddress].status = Status.Approved;
             return true;
-        }
+    }
 
-//check Buyer Status if approved or Rejected or pending
-
+    //check Buyer Status if approved or Rejected or pending
     function checkBuyerStatus(address _address) public view returns(string memory) {
          
          require(isBuyerExist[_address], "this seller doesn't exist");
          return (BuyerMapping[_address].status == Status.Approved ? "Approved"
          : (BuyerMapping[_address].status == Status.Rejected) ? "Rejected" : "Pending");
-        }
+    }
 
 
 
-//BuyLand using LandId
-//using LandID we will retrieve the seller address ,
-//amount will be paid through msg.value
-//@param LandID
+    //BuyLand using LandId
+    //using LandID we will retrieve the seller address ,
+    //amount will be paid through msg.value
+    //@param LandID
 
 
     function BuyLand(uint _landId) public checkIfLandExist(_landId) payable{
@@ -271,11 +268,13 @@ contract  LandRegistration is Conditions  {
       require(lands[_landId].LandPrice == msg.value, "You must pay full amount");
       lands[_landId].currOwner.transfer(msg.value);
       lands[_landId].currOwner = payable(msg.sender);
+
+      emit landsNewOwner(_landId,msg.sender);
       
     }
 
-//Transfer OwnerShip, from owner to new address with paying money..
-//like Father trasnfering property to son
+    //Transfer OwnerShip, from owner to new address with paying money..
+    //like Father trasnfering property to son
 
     function transferOwnerShip(address payable _address,uint _landId) public checkIfLandExist(_landId)  {
       
@@ -284,9 +283,8 @@ contract  LandRegistration is Conditions  {
     }
 
 
-//check status of landID 
-//@params LandID
-
+    //check status of landID 
+    //@params LandID
     function checkLandStatus(uint _landId) public view checkIfLandExist(_landId) returns(string memory) {
          return (lands[_landId].status == Status.Approved ? "Approved"
          :(lands[_landId].status == Status.Rejected) ? "Rejected"
@@ -295,45 +293,43 @@ contract  LandRegistration is Conditions  {
  
 
 
- // Address of owner who has deployed the project
-
+    // Address of owner who has deployed the project
     function ContractOwnerInfo() public view returns(address){
          return _owner;
     } 
 
 
-//City of given LandId
-   function getLandCity(uint _landId) public view checkIfLandExist(_landId)
+    //City of given LandId
+    function getLandCity(uint _landId) public view checkIfLandExist(_landId)
     returns(string memory) {
          return (lands[_landId].City);
     }
 
 
- //To check the price of given LandId
+    //To check the price of given LandId
     function GetLandPrice(uint _landId) public view checkIfLandExist(_landId) returns(uint) {
          return(lands[_landId].LandPrice);
     } 
 
-//To get Land Area of Specific landId;
+    //To get Land Area of Specific landId;
     function GetLandArea(uint _landId) public view checkIfLandExist(_landId) returns(string memory) {
          return(lands[_landId].Area);
     }
 
-//To check if the address is in Buyer Mapping or Not
-//@params address of the
+    //To check if the address is in Buyer Mapping or Not
+    //@params address of the
     function isBuyer(address _address) public view returns(string memory) {
          return (isBuyerExist[_address] ? "true" : "false"); 
     } 
 
-//To check if this address exist in Seller Mapping or not
-//@params address of the seller
+    //To check if this address exist in Seller Mapping or not
+    //@params address of the seller
     function isSeller(address _address) public view returns(string memory) {
          return (isSellerExist[_address] ? "true" : "false");
     } 
 
 
-//add as many landInspectors you wish
-
+    //add as many landInspectors you wish
     function AddLandInspector(
          address Id, 
          string memory Name, 
